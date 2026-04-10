@@ -1,9 +1,8 @@
 import agent_lexer
 from agent_lexer import Token
 from typing import Dict, Tuple, List
-# -----------------------------
-# LL(1) Predictive Parser
-# -----------------------------
+
+# LL(1) Stack Parser class
 
 class ParseError(Exception):
     pass
@@ -349,8 +348,8 @@ class AgentParser:
 
     def parse(self, tokens: List[Token], trace: bool = False) -> None:
         """
-        Table-driven LL(1) parse. Raises ParseError on failure.
-        On success, consumes input and returns None.
+        Table-driven LL(1) parse. Implemented using stack.
+        Raises ParseError on failure. On success, consumes input and returns None.
         """
         stack: List[str] = ["$", "program"]
         i = 0
@@ -407,9 +406,7 @@ class AgentParser:
             raise ParseError(f"Extra input starting at {tok.value!r} (token {tok.type}) at position {tok.line}:{tok.column}")
 
 
-# -----------------------------
 # Demo / quick test
-# -----------------------------
 
 def main() -> None:
     samples = [
@@ -417,27 +414,27 @@ def main() -> None:
             tool web_search
             tool llm
             task gather(string topic) -> string data {
-            action: web_search(topic)
-            action: llm("summarize results")
+                action: web_search(topic)
+                action: llm("summarize results")
             }
-            }
+        }
             agent Analyzer {
-            tool llm
-            task sentiment(string text) -> string result {
-            action: llm("detect sentiment")
+                tool llm
+                task sentiment(string text) -> string result {
+                action: llm("detect sentiment")
             }
-            }
+        }
             system {
-            list topics = ["AI","Robotics","Security"]
-            int i = 0
-            bool negative_found = false
-            for t in topics {
-            string data = run Researcher.gather(t)
-            string sentiment = run Analyzer.sentiment(data)
-            if sentiment == "negative" {
-            negative_found = true
-            }
-            i = i + 1
+                list topics = ["AI","Robotics","Security"]
+                int i = 0
+                bool negative_found = false
+                for t in topics {
+                    string data = run Researcher.gather(t)
+                    string sentiment = run Analyzer.sentiment(data)
+                    if sentiment == "negative" {
+                    negative_found = true
+                }
+                i = i + 1
             }
         }"""
     ]
@@ -451,9 +448,9 @@ def main() -> None:
             toks.append(Token("$", "$", -1, -1))
             parser.parse(toks, trace=False)
             agent_lexer.print_tokens(toks)
-            print("✅ Accepted")
+            print("Input accepted")
         except (agent_lexer.LexerError, ParseError) as e:
-            print("❌ Rejected:", e)
+            print("Input rejected:", e)
 
 
 if __name__ == "__main__":
