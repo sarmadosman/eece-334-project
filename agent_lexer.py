@@ -2,10 +2,7 @@ import re #Python’s regular expression engine (the heart of the lexer)
 import sys #to read command-line arguments
 from collections import namedtuple #creates a lightweight object for tokens
 
-
-# -----------------------------
 # Token definition
-# -----------------------------
 Token = namedtuple("Token", ["type", "value", "line", "column"])
 
 class LexerError(Exception):
@@ -15,12 +12,13 @@ def print_tokens(tokens):
         print("TOKENS:")
         for t in tokens:
             print(f"type={t.type:<4}  value={t.value:<10}  pos=({t.line},{t.column})")
-# -----------------------------
-# Token specifications (ORDER MATTERS)
+
+
+# Token specifications (ORDER MATTERS): implements longest-prefix matching and priority.
 # an ordered list of (TOKEN_NAME, REGEX) pairs.
 # ORDER MATTERS — earlier rules have priority.
 # The lexer tries patterns from top to bottom, and the first matching rule wins.
-# -----------------------------
+
 TOKEN_SPECIFICATION = [
     # Keywords
     ("AGENT", r"agent\b"),
@@ -78,21 +76,19 @@ TOKEN_SPECIFICATION = [
     ("MISMATCH", r"."),
 ]
 
-# -----------------------------
+
 # Compile master regex
 # turns many token regexes into one single regex that can scan the input left-to-right in one pass and 
 # tell us which token matched.
 # Each (?P<...>...) defines
 # a group with a name
 # that captures matched text
-# -----------------------------
+
 master_pattern = re.compile(
     "|".join(f"(?P<{name}>{pattern})" for name, pattern in TOKEN_SPECIFICATION)
 )
 
-# -----------------------------
 # Lexer function
-# -----------------------------
 def tokenize(code):
     tokens = []
     line_num = 1
@@ -135,9 +131,7 @@ def tokenize(code):
 
     return tokens
 
-# -----------------------------
 # Main program
-# -----------------------------
 def main():
     if len(sys.argv) != 2:
         print("Usage: python lexer.py <source_file>")
