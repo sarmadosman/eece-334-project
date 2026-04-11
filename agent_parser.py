@@ -9,79 +9,14 @@ class ParseError(Exception):
 
 
 class AgentParser:
-    """
-    Grammar:
-    program → agent_defs system_def
-
-    agent_defs → agent_def agent_defs'
-    agent_defs' → agent_def agent_defs' | epsilon
-    agent_def → agent ID {agent_block}
-    agent_block → capabilities task_defs
-
-    capabilities → cap_stmt capabilities | epsilon
-    cap_stmt → tool ID
-
-    task_defs → task_def task_defs | epsilon
-    task_def → task ID(param_list) -> type ID {action_block}
-
-    action_block → action_def action_block | epsilon
-    action_def → action: ID(input_list)
-
-    param_list → param param_tail | epsilon
-    param → type ID
-    param_tail → , param param_tail | epsilon
-
-    input_list → expression input_tail | epsilon
-    input_tail → , expression input_tail | epsilon
-
-    type → string | int | list | bool
-
-    system_def → system {system_block}
-    system_block → stmt system_block | epsilon
-
-    block → stmt block | epsilon
-    stmt → for_loop | var_decl | assignment | if_stmt
-    for_loop → for ID in ID {block}
-    if_stmt → if condition {block}
-    condition → expression comparison_op expression
-    comparison_op → < | > | == | >= | <= | !=
-    var_decl → type ID = expression
-    run_stmt → run ID.ID(input_list)
-    assignment → ID = expression
-    expression → term expression'
-    expression' → + term expression' | epsilon
-    term → factor term'
-    term' → * factor term' | epsilon
-    factor → ID | NUM | true | false | list_content | run_stmt | STRING_LIT | (expression) 
-    list_content → [list_items]
-    list_items → expression list_tail | epsilon
-    list_tail → , expression list_tail | epsilon
-
-
-    Terminals:
-        "AGENT", "SYSTEM", "TOOL", "TASK", "ACTION", "RUN", "FOR", "IN", 
-        "IF", "STRING_DECL", "INT_DECL", "LIST_DECL", "BOOL_DECL", "TRUE",
-        "FALSE", "ID", "NUM", "STRING_LIT", "LBRACE", "RBRACE", "LPAREN", 
-        "RPAREN", "LBRACKET", "RBRACKET", "COMMA", "DOT", "COLON", "PLUS", 
-        "MULT","LE", "GE", "EQ", "NEQ", "ARROW", "ASSIGN", "LT", "GT","$"
-
-    Nonterminals:
-        "program", "agent_defs", "agent_defs'", "agent_def", "agent_block",
-        "capabilities", "cap_stmt", "task_defs", "task_def", "action_block",
-        "action_def", "param_list", "param", "param_tail", "input_list",
-        "input_tail", "type", "system_def", "system_block", "block", "stmt",
-        "for_loop", "if_stmt", "condition", "comparison_op", "var_decl",
-        "run_stmt", "assignment", "expression", "expression'", "term", "term'",
-        "factor", "list_content", "list_items", "list_tail"
-    """
     EPS = "ε"
 
     def __init__(self) -> None:
-        # Parse table: (NonTerminal, lookahead_terminal) -> production (list of symbols)
-        # Productions are lists of symbols, using "ε" to mean empty.
+        #parse table is of the form (NonTerminal, lookahead_terminal) -> production (list of symbols)
+        #productions are lists of symbols using "ε" to mean empty.
         self.table: Dict[Tuple[str, str], List[str]] = {}
 
-        # Build a correct LL(1) table for the given grammar.
+        #building LL(1) table
         self._build_table()
 
         self.nonterminals = {
@@ -103,9 +38,11 @@ class AgentParser:
 
     def _add(self, A: str, a: str, rhs: List[str]) -> None:
         key = (A, a)
+        
         if key in self.table and self.table[key] != rhs:
             raise ValueError(f"Conflict in parse table at {key}: "
                              f"{self.table[key]} vs {rhs}")
+            
         self.table[key] = rhs
 
     def _build_table(self) -> None:
@@ -365,7 +302,7 @@ class AgentParser:
                 remaining = " ".join(t.type for t in tokens[i:])
                 print(f"STACK_TOP={top:>4}  LOOKAHEAD={la:>4}  REMAINING={remaining}")
 
-            # Terminal or end marker
+            #terminal or end marker
             if top in self.terminals:
                 if top == la:
                     i += 1
@@ -376,11 +313,11 @@ class AgentParser:
                     )
                 continue
 
-            # Epsilon
+            #epsilon
             if top == self.EPS:
                 continue
 
-            # Nonterminal
+            #nonterminal
             if top in self.nonterminals:
                 prod = self.table.get((top, la))
                 if prod is None:
@@ -391,7 +328,7 @@ class AgentParser:
                         f"Expected one of: {expected}"
                     )
 
-                # push RHS in reverse (skip ε)
+                #push RHS in reverse (skip ε)
                 if len(prod) == 1 and prod[0] == self.EPS:
                     continue
                 for sym in reversed(prod):
@@ -400,13 +337,13 @@ class AgentParser:
 
             raise ParseError(f"Unknown grammar symbol on stack: {top}")
 
-        # If stack is empty, we should have consumed '$'
+        #if stack is empty we should have consumed '$'
         if tokens[i - 1].type != "$":
             tok = tokens[i]
             raise ParseError(f"Extra input starting at {tok.value!r} (token {tok.type}) at position {tok.line}:{tok.column}")
 
 
-# Demo / quick test
+#testing:
 
 def main() -> None:
     samples = [
