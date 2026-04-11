@@ -343,7 +343,7 @@ class AgentParser:
             raise ParseError(f"Extra input starting at {tok.value!r} (token {tok.type}) at position {tok.line}:{tok.column}")
 
 
-#testing:
+#testing/demo on two examples: first example is from the slides, the second is original. both are accepted by the parser:
 
 def main() -> None:
     samples = [
@@ -373,7 +373,40 @@ def main() -> None:
                 }
                 i = i + 1
             }
-        }"""
+        }""",
+        """agent ArticleWriter {
+                tool web_search
+                tool llm
+                task gather_facts(string topic) -> string data {
+                    action: web_search(topic)
+                }
+
+                task write(string facts, bool allow) -> string article {
+                    action: llm("write an article based on these results", allow) 
+                }
+            }
+
+        agent CurrentEventFinder {
+            tool web_search
+            task return_recent_events() -> list events {
+                action: web_search("current events")
+            }
+        }
+
+        system {
+            list events = run CurrentEventFinder.return_recent_events()
+            int i = 0
+            if events!=[] {
+                for x in events {
+                    if x !="" {
+                        i = i + 1
+                        string facts = run ArticleWriter.gather_facts(x)
+                        string article = run ArticleWriter.write(facts, true)
+                    }
+                }
+            }
+        }
+    """
     ]
 
     parser = AgentParser()

@@ -42,7 +42,7 @@ TOKEN_SPECIFICATION = [
     ("STRING_LIT", r'"([^"]*)"'),
 
     # Identifiers
-    ("ID", r"[a-zA-Z_][a-zA-Z0-9]*(_[a-zA-Z0-9]+)?_?"),
+    ("ID", r"[a-zA-Z_][a-zA-Z0-9_]*"),
 
 
     # Delimiters
