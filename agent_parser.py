@@ -3,7 +3,7 @@ import agent_semantic_analyzer
 from agent_lexer import Token
 from typing import Any, Dict, Tuple, List
 
-# LL(1) Stack Parser class
+# LL(1) Stack Parser class 
 
 class ParseError(Exception):
     pass
