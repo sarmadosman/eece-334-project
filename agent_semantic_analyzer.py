@@ -8,40 +8,47 @@ class SemanticError(Exception):
     pass
 
 
-UNKNOWN = "unknown"
-LIST_UNKNOWN = "list<unknown>"
-COMPARISON_OPS = {"==", "!=", "<", ">", "<=", ">="}
+UNKNOWN="unknown"
+LIST_UNKNOWN="list<unknown>"
+COMPARISON_OPS={"==", "!=", "<", ">", "<=", ">="}
 
 
 def analyze(ast: Dict[str, Any]) -> Dict[str, Any]:
+    
     agents = build_agent_table(ast)
     variables: Dict[str, str] = {}
-
     analyze_statements(ast["system"]["statements"], variables, agents)
+    
     return {"agents": agents, "variables": variables}
 
 
 def build_agent_table(ast: Dict[str, Any]) -> Dict[str, Any]:
+    
     agents: Dict[str, Any] = {}
 
     for agent in ast["agents"]:
+        
         agent_name = agent["name"]
+        
         if agent_name in agents:
             raise SemanticError(f"Duplicate agent {agent_name!r}")
 
         tools = set()
+        
         for tool in agent["tools"]:
             if tool in tools:
                 raise SemanticError(f"Duplicate tool {tool!r} in agent {agent_name!r}")
             tools.add(tool)
 
         tasks = {}
+        
         for task in agent["tasks"]:
             task_name = task["name"]
             if task_name in tasks:
                 raise SemanticError(f"Duplicate task {task_name!r} in agent {agent_name!r}")
 
             param_names = set()
+            
             for param in task["params"]:
                 if param["name"] in param_names:
                     raise SemanticError(
@@ -78,12 +85,14 @@ def analyze_statement(stmt: Dict[str, Any], variables: Dict[str, str], agents: D
     node = stmt["node"]
 
     if node == "var_decl":
+        
         name = stmt["name"]
         if name in variables:
             raise SemanticError(f"Variable {name!r} is already declared")
 
         actual_type = expression_type(stmt["value"], variables, agents)
         require_assignable(stmt["type"], actual_type, f"variable {name!r}")
+        
         if stmt["type"] == "list" and is_list_type(actual_type):
             variables[name] = actual_type
         else:
@@ -91,12 +100,14 @@ def analyze_statement(stmt: Dict[str, Any], variables: Dict[str, str], agents: D
         return
 
     if node == "assignment":
+        
         name = stmt["name"]
         if name not in variables:
             raise SemanticError(f"Assignment to undeclared variable {name!r}")
 
         actual_type = expression_type(stmt["value"], variables, agents)
         require_assignable(variables[name], actual_type, f"variable {name!r}")
+        
         return
 
     if node == "for":
